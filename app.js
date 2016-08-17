@@ -5,7 +5,7 @@
 
 //	******************************************* Dependencies *******************************************
 
-var config = require('./config-real');
+var config = require('./config');
 // Express
 var express = require('express');
 var app = express();
@@ -24,22 +24,17 @@ var ami = new require('asterisk-manager')(
 );
 ami.keepConnected();
 
-console.log("*************************************************************************************************************************");
-console.log("************************************************** APP HAS BEEN STARTED *************************************************");
-console.log("*************************************************************************************************************************");
-
-//	******************************************* Express *******************************************
-
+//	******************************************* EXPRESS *******************************************
 /*	Receive get-request containing a phone number sent by Askozia.
 	Send message to telegram chat informing the operator about missed call and
 	the number also allowing her to choose which intertal number to use to call back. */
-app.get('/missed/:phone/:dura', function(req, res) {
+app.get('/missed/:phone/:duration', function(req, res) {
 	// Extracting and formatting number to dial
-    var missedCall = req.params.phone;
-    var phoneNumber = missedCall.replace('+',"").replace('+',"");
-    var duration = req.params.dura;
+    var phoneNumber = req.params.phone;
+    var duration = req.params.duration;
 
-	var replyText = 'Missed call from +' + phoneNumber + '. Waiting time: ' + duration + ' seconds.';
+	var replyText = 'Пропущенный звонок +' + phoneNumber + ' (на линии: ' + duration + ' с.)';
+
 	// Build a custom inline keyboard with internal telephone extentions
 	var options = {
   		reply_markup: JSON.stringify({
@@ -53,11 +48,11 @@ app.get('/missed/:phone/:dura', function(req, res) {
 
 	// Send a message with inline buttons to the chat
 	bot.sendMessage(config.chatid, replyText, options);
-	res.send(200,{result: 'ok'});
+	res.send(200, {result: 'ok'});
 });
 
 app.listen(config.app_port, function () {
-  //console.log('App started at ' + config.app_port + ' port!');
+	console.log("******** APP HAS BEEN STARTED (port: "+config.app_port+") *********");
 });
 
 //	******************************************* Telegram *******************************************
@@ -67,12 +62,12 @@ bot.on('callback_query', function (msg) {
 	// Extract internal number from JSON
 	var ext = msg.data;
 	var arr = ext.split(",");
-	var customerNum = arr[1];
 	var operatorNum = arr[0];
+	var customerNum = arr[1];
 
 	// Create different message options
 	var message = msg.message.text;
-	var midMsg = message + "\n⚠️" + operatorNum + " dialing " + customerNum + '...';
+	var midMsg = message + "\n⚠️ " + operatorNum + " уже набирает " + customerNum + '...';
 
 	/*  After a handful of attempts to make the inline keyboard stay after changing the message text
 		inserting json object with keyboard in it appeared to be a fine workaround. */
@@ -84,7 +79,7 @@ bot.on('callback_query', function (msg) {
   		})
 	};
 	// Extract number to dial from  message text
-	bot.answerCallbackQuery(msg.id, 'Dialing +' + customerNum + '...',false);
+	bot.answerCallbackQuery(msg.id, 'Набираем +' + customerNum + '...', false);
 	// Change the message text to assure the operator that ths number has been called
 	bot.editMessageText(midMsg, idKboard);
 	// Call Asterisk manager method that will initiate dialing
@@ -100,7 +95,7 @@ bot.on('callback_query', function (msg) {
 	https://wiki.asterisk.org/wiki/display/AST/Asterisk+11+AMI+Actions
 */
 
-function dial(num, exten, callback, message, array) {
+function dial(num, exten, callback, message, idKboard) {
 	ami.action({
   			'action': 'originate',
   			'channel':  'SIP/' + exten,
@@ -115,27 +110,27 @@ function dial(num, exten, callback, message, array) {
 				ami.on('bridge', function(evt) {
 					// check if we got answer & that it's not two operators calling each other
 					if (evt.bridgestate === "Link" && evt.callerid2 === num) {
-						callback(message + "\n✅ "+exten+" reached +" + num , array);
+						callback(message + "\n✅ "+exten+" перезвонили +" + num , idKboard);
 					}
 				});
 				ami.on('hangup', function(evt) {
 					// Customer dropped the call
 					if (evt.cause === "17" && evt.connectedlinenum != "<unknown>") {
-						callback(message + "\n📴 +"+num+" dropped call from " + exten, array);
+						callback(message + "\n📴 +"+num+" отменен " + exten, idKboard);
 					}
 					// Customer didn't answer the call
 					if (evt.cause === "21" && evt.connectedlinenum != "<unknown>") {
-						callback(message + "\n🚫 +"+num+" didn't answer the call from " + exten, array);
+						callback(message + "\n🚫 +"+num+" не ответил на звонок от " + exten, idKboard);
 					}
 				});
 			} else {
-				callback(message + "\n❌ "+exten+" dropped the call to +" + num , array);
+				callback(message + "\n❌ "+exten+" отменил звонок на +" + num , idKboard);
 			}
 		});
 }
 
 // callback function that changes message upon call result
-function callback(message, array) {
+function callback(message, idKboard) {
 	// Change the message text to assure the operator that ths number has been called
-	bot.editMessageText(message, array);
+	bot.editMessageText(message, idKboard);
 }

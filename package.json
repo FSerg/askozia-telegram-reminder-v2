@@ -1,14 +1,15 @@
 {
-  "name": "askozia_bot",
-  "version": "1.0.0",
+  "name": "askozia-telegram-reminder",
+  "version": "2.0.0",
   "description": "Telegram bot for AMI Asterisk interaction",
   "main": "app.js",
   "scripts": {
+    "start": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ArthurMcCay/Askozia-Bot.git"
+    "url": "git@github.com:FSerg/askozia-telegram-reminder-v2.git"
   },
   "keywords": [
     "telegram",
@@ -17,12 +18,12 @@
     "asterisk",
     "node.js"
   ],
-  "author": "Arthur McCay",
+  "author": "Arthur McCay & FSerg",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/ArthurMcCay/Askozia-Bot/issues"
+    "url": "https://github.com/FSerg/askozia-telegram-reminder-v2/issues"
   },
-  "homepage": "https://github.com/ArthurMcCay/Askozia-Bot#readme",
+  "homepage": "https://github.com/FSerg/askozia-telegram-reminder-v2#readme",
   "dependencies": {
     "asterisk-manager": "0.1.x",
     "express": "^4.14.0",

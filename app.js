@@ -48,7 +48,7 @@ app.get('/missed/:phone/:duration', function(req, res) {
 
 	// Send a message with inline buttons to the chat
 	bot.sendMessage(config.chatid, replyText, options);
-	res.send(200, {result: 'ok'});
+	res.send({result: 'ok'});
 });
 
 app.listen(config.app_port, function () {

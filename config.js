@@ -11,5 +11,5 @@ module.exports = {
     'ami_login': process.env.AMI_LOGIN,
     'ami_pass': process.env.AMI_PASS,
 
-	'local_context': process.env.LOCAL_CONTEXT
+    'local_context': process.env.LOCAL_CONTEXT
 };

@@ -24,6 +24,16 @@ var ami = new require('asterisk-manager')(
 );
 ami.keepConnected();
 
+ami.on('disconnect', function(evt) {
+    console.log('ATS askozia disconnected ('+moment().format()+'):');
+    console.log(evt);
+});
+
+ami.on('connect', function(evt) {
+    console.log('==========================================================');
+    console.log('ATS askozia connected! '+'('+moment().format()+')');
+});
+
 //	******************************************* EXPRESS *******************************************
 /*	Receive get-request containing a phone number sent by Askozia.
 	Send message to telegram chat informing the operator about missed call and
@@ -71,19 +81,23 @@ bot.on('callback_query', function (msg) {
 
 	/*  After a handful of attempts to make the inline keyboard stay after changing the message text
 		inserting json object with keyboard in it appeared to be a fine workaround. */
+	console.log(msg);
 	var idKboard = {message_id: msg.message.message_id, chat_id: msg.message.chat.id, reply_markup: JSON.stringify({
-   			inline_keyboard: [
+	   			inline_keyboard: [
   				[{text:'201',callback_data:'201,'+customerNum},{text:'202',callback_data:'202,'+customerNum},{text:'301',callback_data:'301,'+customerNum},{text:'302',callback_data:'302,'+customerNum}],
   				[{text:'401',callback_data:'401,'+customerNum},{text:'402',callback_data:'402,'+customerNum},{text:'501',callback_data:'501,'+customerNum},{text:'502',callback_data:'502,'+customerNum},{text:'601',callback_data:'601,'+customerNum}]
 			]
   		})
 	};
-	// Extract number to dial from  message text
-	bot.answerCallbackQuery(msg.id, 'Набираем +' + customerNum + '...', false);
+
 	// Change the message text to assure the operator that ths number has been called
 	bot.editMessageText(midMsg, idKboard);
+
+	// Extract number to dial from  message text
+	bot.answerCallbackQuery(msg.id, 'Набираем +' + customerNum + '...', false);
+
 	// Call Asterisk manager method that will initiate dialing
-	dial(customerNum,operatorNum, callback, message, idKboard);
+	dial(customerNum, operatorNum, message, idKboard);
 });
 
 //	******************************************* Asterisk *******************************************
@@ -95,7 +109,8 @@ bot.on('callback_query', function (msg) {
 	https://wiki.asterisk.org/wiki/display/AST/Asterisk+11+AMI+Actions
 */
 
-function dial(num, exten, callback, message, idKboard) {
+function dial(num, exten, message, idKboard) {
+	console.log('DIAL!');
 	ami.action({
   			'action': 'originate',
   			'channel':  'SIP/' + exten,
@@ -103,34 +118,43 @@ function dial(num, exten, callback, message, idKboard) {
   			'CallerId': 'Alfa Medcenter',
   			'timeout': '6000',
   			'exten': num,
-  			'priority': '1'
+  			'priority': '1',
+			'variable':{
+			    'name1':'value1',
+			    'name2':'value2'
+			  }
 		}, function(err_ami, res_ami) {
 			if (res_ami.response === "Success") {
 				//ami.on('managerevent', function(evt) { console.log(evt) });
 				ami.on('bridge', function(evt) {
 					// check if we got answer & that it's not two operators calling each other
 					if (evt.bridgestate === "Link" && evt.callerid2 === num) {
-						callback(message + "\n✅ "+exten+" перезвонили +" + num , idKboard);
+						console.log('bridge: ');
+						console.log(evt);
+						// updateMessage(message + "\n✅ "+exten+" перезвонили +" + num , idKboard);
 					}
 				});
 				ami.on('hangup', function(evt) {
+					console.log('hangup: ');
+					console.log(evt);
 					// Customer dropped the call
 					if (evt.cause === "17" && evt.connectedlinenum != "<unknown>") {
-						callback(message + "\n📴 +"+num+" отменен " + exten, idKboard);
+						// updateMessage(message + "\n📴 +"+num+" отменен " + exten, idKboard);
 					}
 					// Customer didn't answer the call
 					if (evt.cause === "21" && evt.connectedlinenum != "<unknown>") {
-						callback(message + "\n🚫 +"+num+" не ответил на звонок от " + exten, idKboard);
+						// updateMessage(message + "\n🚫 +"+num+" не ответил на звонок от " + exten, idKboard);
 					}
 				});
 			} else {
-				callback(message + "\n❌ "+exten+" отменил звонок на +" + num , idKboard);
+				updateMessage(message + "\n❌ "+exten+" отменил звонок на +" + num , idKboard);
 			}
 		});
 }
 
 // callback function that changes message upon call result
-function callback(message, idKboard) {
+
+function updateMessage(message, idKboard) {
 	// Change the message text to assure the operator that ths number has been called
 	bot.editMessageText(message, idKboard);
 }

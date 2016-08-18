@@ -39,8 +39,8 @@ app.get('/missed/:phone/:duration', function(req, res) {
 	var options = {
   		reply_markup: JSON.stringify({
    			inline_keyboard: [
-  				[{text:'101',callback_data:'101,'+phoneNumber},{text:'202',callback_data:'202,'+phoneNumber},{text:'301',callback_data:'301,'+phoneNumber},{text:'302',callback_data:'302,'+phoneNumber}],
-  				[{text:'401',callback_data:'401,'+phoneNumber},{text:'402',callback_data:'402,'+phoneNumber},{text:'501',callback_data:'501,'+phoneNumber},{text:'502',callback_data:'502,'+phoneNumber}]
+  				[{text:'201',callback_data:'201,'+phoneNumber},{text:'202',callback_data:'202,'+phoneNumber},{text:'301',callback_data:'301,'+phoneNumber},{text:'302',callback_data:'302,'+phoneNumber}],
+  				[{text:'401',callback_data:'401,'+phoneNumber},{text:'402',callback_data:'402,'+phoneNumber},{text:'501',callback_data:'501,'+phoneNumber},{text:'502',callback_data:'502,'+phoneNumber},{text:'601',callback_data:'601,'+phoneNumber}]
 			]
 
   		})
@@ -73,8 +73,8 @@ bot.on('callback_query', function (msg) {
 		inserting json object with keyboard in it appeared to be a fine workaround. */
 	var idKboard = {message_id: msg.message.message_id, chat_id: msg.message.chat.id, reply_markup: JSON.stringify({
    			inline_keyboard: [
-  				[{text:'101',callback_data:'101,'+customerNum},{text:'202',callback_data:'202,'+customerNum},{text:'301',callback_data:'301,'+customerNum},{text:'302',callback_data:'302,'+customerNum}],
-  				[{text:'401',callback_data:'401,'+customerNum},{text:'402',callback_data:'402,'+customerNum},{text:'501',callback_data:'501,'+customerNum},{text:'502',callback_data:'502,'+customerNum}]
+  				[{text:'201',callback_data:'201,'+customerNum},{text:'202',callback_data:'202,'+customerNum},{text:'301',callback_data:'301,'+customerNum},{text:'302',callback_data:'302,'+customerNum}],
+  				[{text:'401',callback_data:'401,'+customerNum},{text:'402',callback_data:'402,'+customerNum},{text:'501',callback_data:'501,'+customerNum},{text:'502',callback_data:'502,'+customerNum},{text:'601',callback_data:'601,'+customerNum}]
 			]
   		})
 	};

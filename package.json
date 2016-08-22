@@ -27,6 +27,7 @@
   "dependencies": {
     "asterisk-manager": "0.1.x",
     "express": "^4.14.0",
+    "moment": "^2.14.1",
     "node-telegram-bot-api": "^0.23.3"
   }
 }
